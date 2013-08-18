@@ -5,7 +5,7 @@ OBJCOPY = $(PREFIX)-objcopy
 OBJDUMP = $(PREFIX)-objdump
 FLASH   = $(shell which st-flash)
 
-TOOLCHAIN_DIR ?= ../../STM/libopencm3
+TOOLCHAIN_DIR ?= ../../../STM/libopencm3
 
 CFLAGS   += -Os -g \
             -Wall -Wextra -Wimplicit-function-declaration -Wredundant-decls -Wstrict-prototypes -Wundef -Wshadow \

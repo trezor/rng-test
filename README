@@ -20,3 +20,30 @@ stm32_rng_nc_*.dat - data generated from STM32 chip using random32_nc() function
 *.ent              - output from "ent" program run for each *.dat file
 
 *.rngtest          - output from "rngtest" program run for each *.dat file
+
+
+Notes
+-----
+
+Ubuntu: sudo apt-get install dieharder ent rng-tools
+
+Data generated with:
+  - Trezor device using python-trezor/tools/rng_entropy_collector.py
+    rng-test> ../python-trezor/tools/rng_entropy_collector.py stm32_rng_1.dat 1048576
+              unplug and re-plug Trezor device
+    rng-test> ../python-trezor/tools/rng_entropy_collector.py stm32_rng_2.dat 1048576
+              unplug and re-plug Trezor device
+    rng-test> ../python-trezor/tools/rng_entropy_collector.py stm32_rng_3.dat 1048576
+              unplug and re-plug Trezor device
+    rng-test> ../python-trezor/tools/rng_entropy_collector.py stm32_rng_4.dat 1048576
+              unplug and re-plug Trezor device
+    rng-test> ../python-trezor/tools/rng_entropy_collector.py stm32_rng_5.dat 1048576
+              unplug and re-plug Trezor device
+    rng-test> ../python-trezor/tools/rng_entropy_collector.py stm32_rng_6.dat 1048576
+              unplug and re-plug Trezor device
+    rng-test> ../python-trezor/tools/rng_entropy_collector.py stm32_rng_7.dat 1048576
+              unplug and re-plug Trezor device
+    rng-test> ../python-trezor/tools/rng_entropy_collector.py stm32_rng_8.dat 1048576
+              unplug and re-plug Trezor device
+  - Ubuntu 16.04.2 LTS 4.4.0-64-generic x86_64 GNU/Linux
+    make osrandom osurandom all

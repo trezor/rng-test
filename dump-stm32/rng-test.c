@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <libopencm3/cm3/common.h>
+#include <libopencm3/stm32/memorymap.h>
 #include <libopencm3/stm32/f2/rcc.h>
 #include <libopencm3/stm32/f2/gpio.h>
 #include <libopencm3/stm32/f2/rng.h>
@@ -206,7 +207,7 @@ static void cdcacm_data_rx_cb(usbd_device *usbd_dev, uint8_t ep)
 	usbd_ep_read_packet(usbd_dev, 0x01, buf, 64);
 
 	for (i = 0; i < 4; i++) {
-		uint32_t r = random32_nc();
+		uint32_t r = random32();
 		for (j = 0; j < 8; j++) {
 			buf[i * 8 + j] = hex[(r >> (j * 4)) & 0xF];
 		}
@@ -230,24 +231,45 @@ static void cdcacm_set_config(usbd_device *usbd_dev, uint16_t wValue)
 				cdcacm_control_request);
 }
 
+uint32_t __stack_chk_guard;
+
+void __attribute__((noreturn)) __stack_chk_fail(void)
+{
+	for (;;) {} // loop forever
+}
+
+void setup(void)
+{
+	// setup clock
+	struct rcc_clock_scale clock = rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_120MHZ];
+	rcc_clock_setup_hse_3v3(&clock);
+
+	// enable GPIO clock
+	rcc_periph_clock_enable(RCC_GPIOA);
+
+	// enable OTG FS clock
+	rcc_periph_clock_enable(RCC_OTGFS);
+
+	// enable RNG
+	rcc_periph_clock_enable(RCC_RNG);
+	RNG_CR |= RNG_CR_IE | RNG_CR_RNGEN;
+	// to be extra careful and heed the STM32F205xx Reference manual, Section 20.3.1
+	// we don't use the first random number generated after setting the RNGEN bit in setup
+	random32();
+
+	// enable OTG_FS
+	gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO11 | GPIO12);
+	gpio_set_af(GPIOA, GPIO_AF10, GPIO11 | GPIO12);
+}
+
 int main(void)
 {
-	usbd_device *usbd_dev;
+	setup();
 
-	rcc_clock_setup_hse_3v3(&hse_8mhz_3v3[CLOCK_3V3_120MHZ]);
-
-	rcc_peripheral_enable_clock(&RCC_AHB1ENR, RCC_AHB1ENR_IOPAEN);
-	rcc_peripheral_enable_clock(&RCC_AHB2ENR, RCC_AHB2ENR_OTGFSEN);
-	rcc_peripheral_enable_clock(&RCC_AHB2ENR, RCC_AHB2ENR_RNGEN);
-	RNG_CR |= RNG_CR_IE | RNG_CR_RNGEN;
-
-	gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE,
-			GPIO9 | GPIO11 | GPIO12);
-	gpio_set_af(GPIOA, GPIO_AF10, GPIO9 | GPIO11 | GPIO12);
-
-	usbd_dev = usbd_init(&otgfs_usb_driver, &dev, &config, usb_strings, 3, usbd_control_buffer, sizeof(usbd_control_buffer));
+	usbd_device *usbd_dev = usbd_init(&otgfs_usb_driver, &dev, &config, usb_strings, 3, usbd_control_buffer, sizeof(usbd_control_buffer));
 	usbd_register_set_config_callback(usbd_dev, cdcacm_set_config);
 
-	while (1)
+	for (;;) {
 		usbd_poll(usbd_dev);
+	}
 }

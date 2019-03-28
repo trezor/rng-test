@@ -79,6 +79,9 @@ $(NAME).srec: $(NAME).elf
 $(NAME).list: $(NAME).elf
 	$(OBJDUMP) -S $(NAME).elf > $(NAME).list
 
+$(TOOLCHAIN_DIR)/lib/libopencm3_stm32f2.a:
+	make -C $(TOOLCHAIN_DIR)
+
 $(NAME).elf: $(OBJS) $(LDSCRIPT) $(TOOLCHAIN_DIR)/lib/libopencm3_stm32f2.a
 	$(LD) -o $(NAME).elf $(OBJS) -lopencm3_stm32f2 $(LDFLAGS)
 
